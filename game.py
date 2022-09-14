@@ -1,3 +1,8 @@
+from email import message_from_string
+from email.mime import message
+from fnmatch import translate
+from operator import truediv
+from tkinter import CENTER
 import pygame
 import random
 
@@ -197,10 +202,15 @@ def get_shape():
 
 def draw_text_middle(text, size, color, surface):
     font = pygame.font.SysFont('comicsans', size, bold=True)
+    font2 = pygame.font.SysFont('Verdana', 30, bold=True)
     label = font.render(text, 1, color)
-
+    text2="Presione p para pausar y c para continuar"
+    label2=font2.render(text2,1,(255, 195, 0))
+    fondo=pygame.image.load("imagenes/img2.jpg").convert()
+    fondo=pygame.transform.scale(fondo,(800,700))
+    surface.blit(fondo,[0,0])
     surface.blit(label, (top_left_x + play_width/2 - (label.get_width() / 2), top_left_y + play_height/2 - label.get_height()/2))
-
+    surface.blit(label2,(top_left_x + play_width/2 - (label.get_width() /2.1), top_left_y + play_height/4 - label.get_height()/2))
 
 def draw_grid(surface, row, col):
     sx = top_left_x
@@ -236,7 +246,7 @@ def clear_rows(grid, locked):
 
 def draw_next_shape(shape, surface):
     font = pygame.font.SysFont('comicsans', 30)
-    label = font.render('Seguiente ficha',1,(255,255,255))
+    label = font.render('Siguiente',3,(250,250,250))
 
     sx = top_left_x + play_width + 50
     sy = top_left_y + play_height/2 - 100
@@ -250,9 +260,40 @@ def draw_next_shape(shape, surface):
 
     surface.blit(label, (sx + 10, sy- 30))
 
+def pausa(surface):
+    negro=(0,0,0)
+    reloj=pygame.time.Clock()
+    pausado=True
+    while pausado:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type ==pygame.KEYDOWN:
+                if event.key == pygame.K_c:
+                    pausado= False     
+                    pygame.init()
+                    sonido= pygame.mixer.Sound("sonidos/pausar.mp3")
+                    sonido.play()
+                    pygame.mixer.music.play()
+                elif event.key ==pygame.K_d:
+                    pygame.quit()
+                    quit() 
+               
+    surface.fill((255,255,255))   
+
+
+    pygame.display.update()
+   
+
+
 
 def draw_window(surface):
-    surface.fill((0,0,0))
+    
+    fondo=pygame.image.load("imagenes/img5.jpg").convert()
+    fondo=pygame.transform.scale(fondo,(800,700))
+    surface.blit(fondo,[0,0])
+   
     # Tetris Title
     font = pygame.font.SysFont('comicsans', 60)
     label = font.render('TETRIS', 1, (255,255,255))
@@ -281,8 +322,12 @@ def main():
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-
+   
+    
     while run:
+
+       
+
         fall_speed = 0.27
 
         grid = create_grid(locked_positions)
@@ -325,12 +370,19 @@ def main():
                     if not valid_space(current_piece, grid):
                         current_piece.y -= 1
 
-                '''if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_SPACE:
                     while valid_space(current_piece, grid):
                         current_piece.y += 1
                     current_piece.y -= 1
-                    print(convert_shape_format(current_piece))'''  # todo fix
+                    print(convert_shape_format(current_piece))  
 
+                if event.key == pygame.K_p:
+                    sonido= pygame.mixer.Sound("sonidos/despausar.mp3")
+                    sonido.play()
+                    pygame.mixer.music.stop()
+                    pausa(ventana)      
+                    
+                    
         shape_pos = convert_shape_format(current_piece)
 
         # add piece to the grid for drawing
@@ -351,24 +403,28 @@ def main():
             # call four times to check for multiple clear rows
             clear_rows(grid, locked_positions)
 
-        draw_window(win)
-        draw_next_shape(next_piece, win)
+        draw_window(ventana)
+        draw_next_shape(next_piece, ventana)
         pygame.display.update()
 
         # Check if user lost
         if check_lost(locked_positions):
             run = False
 
-    draw_text_middle("Game Over papu", 40, (255,255,255), win)
+    draw_text_middle("Game Over papu", 40, (255,255,255), ventana)
     pygame.display.update()
     pygame.time.delay(2000)
 
 
 def menu_principal():
     run = True
+
     while run:
-        win.fill((0,0,0))
-        draw_text_middle('Presiona cualquier tecla.', 60, (255, 255, 255), win)
+        pygame.mixer.init()
+        pygame.mixer.music.load('sonidos/CancionTetris.mp3')
+        pygame.mixer.music.play(-1)
+        ventana.fill((0,0,0))
+        draw_text_middle('Presiona cualquier tecla para jugar.', 42, (113, 125, 126), ventana)
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -379,7 +435,7 @@ def menu_principal():
     pygame.quit()
 
 
-win = pygame.display.set_mode((s_width, s_height))
+ventana = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption('Tetris')
 
 menu_principal()  # start game
