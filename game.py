@@ -201,7 +201,7 @@ def chequeo_perdio(positions):
     return False
 
 
-def get_shape():
+def obtener_forma():
     global fichas, colores_de_fichas
 
     return Piece(5, 0, random.choice(fichas))
@@ -356,8 +356,8 @@ def main():
 
     change_piece = False
     run = True
-    current_piece = get_shape()
-    next_piece = get_shape()
+    current_piece = obtener_forma()
+    next_piece = obtener_forma()
     clock = pygame.time.Clock()
     fall_time = 0
 
@@ -433,7 +433,7 @@ def main():
                 p = (pos[0], pos[1])
                 locked_positions[p] = current_piece.color
             current_piece = next_piece
-            next_piece = get_shape()
+            next_piece = obtener_forma()
             change_piece = False
 
             # llama cuatro veces para comprobar si hay varias filas despejadas
