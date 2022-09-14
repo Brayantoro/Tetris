@@ -2,7 +2,9 @@ from email import message_from_string
 from email.mime import message
 from fnmatch import translate
 from operator import truediv
-from tkinter import CENTER
+from tkinter import CENTER, font
+from traceback import print_tb
+from turtle import pu
 import pygame
 import random
 
@@ -20,6 +22,9 @@ s_height = 700
 play_width = 300  # meaning 300 // 10 = 30 width per block
 play_height = 600  # meaning 600 // 20 = 20 height per blo ck
 block_size = 30
+
+PUNTAJE = 0
+
 
 top_left_x = (s_width - play_width) // 2
 top_left_y = s_height - play_height
@@ -130,7 +135,8 @@ T = [['.....',
       '.....']]
 
 fichas = [S, Z, I, O, J, L, T]
-colores_de_fichas = [(204, 0, 102), (255, 0, 0), (51, 0, 153 ), (255, 255, 0), (102, 255, 0 ), (0, 0, 255), (0, 204, 204)]
+colores_de_fichas = [(204, 0, 102), (255, 0, 0), (72, 201, 176),
+                     (255, 255, 0), (102, 255, 0), (0, 0, 255), (0, 204, 204)]
 # index 0 - 6 represent shape
 
 
@@ -147,12 +153,12 @@ class Piece(object):
 
 
 def crear_grid(locked_positions={}):
-    grid = [[(0,0,0) for x in range(10)] for x in range(20)]
+    grid = [[(74, 35, 90) for x in range(10)] for x in range(20)]
 
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            if (j,i) in locked_positions:
-                c = locked_positions[(j,i)]
+            if (j, i) in locked_positions:
+                c = locked_positions[(j, i)]
                 grid[i][j] = c
     return grid
 
@@ -174,7 +180,8 @@ def convertir_formato_de_forma(shape):
 
 
 def validar_espacio(shape, grid):
-    accepted_positions = [[(j, i) for j in range(10) if grid[i][j] == (0,0,0)] for i in range(20)]
+    accepted_positions = [[(j, i) for j in range(
+        10) if grid[i][j] == (74, 35, 90)] for i in range(20)]
     accepted_positions = [j for sub in accepted_positions for j in sub]
     formatted = convertir_formato_de_forma(shape)
 
@@ -204,30 +211,40 @@ def dibujar_texto_medio(text, size, color, surface):
     font = pygame.font.SysFont('comicsans', size, bold=True)
     font2 = pygame.font.SysFont('Verdana', 30, bold=True)
     label = font.render(text, 1, color)
-    text2="Presione p para pausar y c para continuar"
-    label2=font2.render(text2,1,(255, 195, 0))
-    fondo=pygame.image.load("imagenes/img2.jpg").convert()
-    fondo=pygame.transform.scale(fondo,(800,700))
-    surface.blit(fondo,[0,0])
-    surface.blit(label, (top_left_x + play_width/2 - (label.get_width() / 2), top_left_y + play_height/2 - label.get_height()/2))
-    surface.blit(label2,(top_left_x + play_width/2 - (label.get_width() /2.1), top_left_y + play_height/4 - label.get_height()/2))
+    text2 = "Presione p para pausar y c para continuar"
+    label2 = font2.render(text2, 1, (255, 195, 0))
+    fondo = pygame.image.load("imagenes/img2.jpg").convert()
+    fondo = pygame.transform.scale(fondo, (800, 700))
+    surface.blit(fondo, [0, 0])
+    surface.blit(label, (top_left_x + play_width/2 - (label.get_width() / 2),
+                 top_left_y + play_height/2 - label.get_height()/2))
+    surface.blit(label2, (top_left_x + play_width/2 - (label.get_width() /
+                 2.1), top_left_y + play_height/4 - label.get_height()/2))
+
 
 def dibujar_cuadrícula(surface, row, col):
     sx = top_left_x
     sy = top_left_y
     for i in range(row):
-        pygame.draw.line(surface, (128,128,128), (sx, sy+ i*30), (sx + play_width, sy + i * 30))  # horizontal lines
+        pygame.draw.line(surface, (128, 128, 128), (sx, sy + i*30),
+                         (sx + play_width, sy + i * 30))  # horizontal lineas
         for j in range(col):
-            pygame.draw.line(surface, (128,128,128), (sx + j * 30, sy), (sx + j * 30, sy + play_height))  # vertical lines
+            pygame.draw.line(surface, (128, 128, 128), (sx + j * 30, sy),
+                             (sx + j * 30, sy + play_height))  # vertical lieas
 
 
-def borrar_filas(grid, locked):
+def show_score(x, y):
+    font = pygame.font.SysFont('comicsans', 20, bold=True)
+    score = font.render("Puntaje :"+format(PUNTAJE), True, (255, 255, 255))
+    ventana.blit(score, (x, y))
+
+
+def borrar_filas(grid, locked, PUNTAJE):
     # necesita ver si la fila está despejada, el cambio cada dos filas arriba hacia abajo
-
     inc = 0
-    for i in range(len(grid)-1,-1,-1):
+    for i in range(len(grid)-1, -1, -1):
         row = grid[i]
-        if (0, 0, 0) not in row:
+        if (74, 35, 90) not in row:
             inc += 1
             # agregar posiciones para eliminar de bloqueado
             ind = i
@@ -240,13 +257,18 @@ def borrar_filas(grid, locked):
         for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
             x, y = key
             if y < ind:
+                PUNTAJE += 100
                 newKey = (x, y + inc)
                 locked[newKey] = locked.pop(key)
+               
+
+    #     return PUNTAJE
+    # print(PUNTAJE)
 
 
 def dibujar_siguiente_forma(shape, surface):
     font = pygame.font.SysFont('comicsans', 30)
-    label = font.render('Siguiente',3,(250,250,250))
+    label = font.render('Siguiente', 3, (250, 250, 250))
 
     sx = top_left_x + play_width + 50
     sy = top_left_y + play_height/2 - 100
@@ -256,69 +278,73 @@ def dibujar_siguiente_forma(shape, surface):
         row = list(line)
         for j, column in enumerate(row):
             if column == '0':
-                pygame.draw.rect(surface, shape.color, (sx + j*30, sy + i*30, 30, 30), 0)
+                pygame.draw.rect(surface, shape.color,
+                                 (sx + j*30, sy + i*30, 30, 30), 0)
 
-    surface.blit(label, (sx + 10, sy- 30))
+    surface.blit(label, (sx + 10, sy - 30))
 
+# Codigo de pausa  para la ventana
 def pausa(ventana):
-    negro=(0,0,0)
-    reloj=pygame.time.Clock()
-    pausado=True
+    negro = (0, 0, 0)
+    reloj = pygame.time.Clock()
+    pausado = True
     while pausado:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            if event.type ==pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_c:
-                    pausado= False     
+                    pausado = False
                     pygame.init()
-                    sonido= pygame.mixer.Sound("sonidos/pausar.mp3")
+                    sonido = pygame.mixer.Sound("sonidos/pausar.mp3")
                     sonido.play()
                     pygame.mixer.music.play()
-                elif event.key ==pygame.K_d:
+                elif event.key == pygame.K_d:
                     pygame.quit()
-                    quit() 
-        ventana.fill((0,0,0))  
-        dibujar_texto_medio2("Presione p para pausar y c para continuar", 30, (241, 79, 22), ventana)
+                    quit()
+        ventana.fill((0, 0, 0))
+        dibujar_texto_medio2(
+            "Presione p para pausar y c para continuar", 30, (241, 79, 22), ventana)
         pygame.display.update()
         reloj.tick(5)
-   
+
+
 def dibujar_texto_medio2(text, size, color, ventana):
-    ventana.fill((0,0,0))  
+    ventana.fill((0, 0, 0))
     font = pygame.font.SysFont('comicsans', size, bold=True)
     label = font.render(text, 1, color)
 
     letra30 = pygame.font.SysFont("Arial", 30)
     imagenTextoPresent = letra30.render("PAUSADO",
-    True, (200,200,200), (0,0,0) )
-    ventana.blit(imagenTextoPresent,(350,290))
-    ventana.blit(label, (top_left_x + play_width/2 - (label.get_width() / 2), top_left_y + play_height/2 - label.get_height()/2))
-    
-
-
-
+                                        True, (200, 200, 200), (0, 0, 0))
+    ventana.blit(imagenTextoPresent, (350, 290))
+    ventana.blit(label, (top_left_x + play_width/2 - (label.get_width() / 2),
+                 top_left_y + play_height/2 - label.get_height()/2))
 
 
 def dibujar_ventana(surface):
-    
-    fondo=pygame.image.load("imagenes/img5.jpg").convert()
-    fondo=pygame.transform.scale(fondo,(800,700))
-    surface.blit(fondo,[0,0])
-   
+
+    fondo = pygame.image.load("imagenes/img5.jpg").convert()
+    fondo = pygame.transform.scale(fondo, (800, 700))
+    surface.blit(fondo, [0, 0])
+
     # Tetris Titulo
     font = pygame.font.SysFont('comicsans', 60)
-    label = font.render('TETRIS', 1, (255,255,255))
+    label = font.render('TETRIS', 1, (255, 255, 255))
 
-    surface.blit(label, (top_left_x + play_width / 2 - (label.get_width() / 2), 30))
+    surface.blit(label, (top_left_x + play_width /
+                 2 - (label.get_width() / 2), 30))
 
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            pygame.draw.rect(surface, grid[i][j], (top_left_x + j* 30, top_left_y + i * 30, 30, 30), 0)
+            pygame.draw.rect(
+                surface, grid[i][j], (top_left_x + j * 30, top_left_y + i * 30, 30, 30), 0)
 
     # dibujar cuadrícula y borde
     dibujar_cuadrícula(surface, 20, 10)
-    pygame.draw.rect(surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 5)
+    pygame.draw.rect(surface, (255, 0, 0), (top_left_x,
+                     top_left_y, play_width, play_height), 5)
     # pygame.display.update()
 
 
@@ -334,11 +360,8 @@ def main():
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-   
-    
-    while run:
 
-       
+    while run:
 
         fall_speed = 0.27
 
@@ -346,7 +369,7 @@ def main():
         fall_time += clock.get_rawtime()
         clock.tick()
 
-        # PIECE FALLING CODE
+        # CÓDIGO DE CAÍDA DE PIEZA
         if fall_time/1000 >= fall_speed:
             fall_time = 0
             current_piece.y += 1
@@ -372,9 +395,11 @@ def main():
                         current_piece.x -= 1
                 elif event.key == pygame.K_UP:
                     # rotar la forma
-                    current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
+                    current_piece.rotation = current_piece.rotation + \
+                        1 % len(current_piece.shape)
                     if not validar_espacio(current_piece, grid):
-                        current_piece.rotation = current_piece.rotation - 1 % len(current_piece.shape)
+                        current_piece.rotation = current_piece.rotation - \
+                            1 % len(current_piece.shape)
 
                 if event.key == pygame.K_DOWN:
                     # mover la forma hacia abajo
@@ -386,15 +411,14 @@ def main():
                     while validar_espacio(current_piece, grid):
                         current_piece.y += 1
                     current_piece.y -= 1
-                    print(convertir_formato_de_forma(current_piece))  
+                    print(convertir_formato_de_forma(current_piece))
 
                 if event.key == pygame.K_p:
-                    sonido= pygame.mixer.Sound("sonidos/despausar.mp3")
+                    sonido = pygame.mixer.Sound("sonidos/despausar.mp3")
                     sonido.play()
                     pygame.mixer.music.stop()
-                    pausa(ventana)      
-                    
-                    
+                    pausa(ventana)
+
         shape_pos = convertir_formato_de_forma(current_piece)
 
         # agregar pieza a la cuadrícula para dibujar
@@ -403,7 +427,7 @@ def main():
             if y > -1:
                 grid[y][x] = current_piece.color
 
-        #SI LA PIEZA TOCA EL SUELO
+        # SI LA PIEZA TOCA EL SUELO
         if change_piece:
             for pos in shape_pos:
                 p = (pos[0], pos[1])
@@ -413,17 +437,18 @@ def main():
             change_piece = False
 
             # llama cuatro veces para comprobar si hay varias filas despejadas
-            borrar_filas(grid, locked_positions)
+            borrar_filas(grid, locked_positions, PUNTAJE)
 
         dibujar_ventana(ventana)
         dibujar_siguiente_forma(next_piece, ventana)
+        show_score(10, 10)
         pygame.display.update()
 
         # Compruebe si la usuario perdió
         if chequeo_perdio(locked_positions):
             run = False
 
-    dibujar_texto_medio("Game Over papu", 40, (255,255,255), ventana)
+    dibujar_texto_medio("Game Over papu", 40, (255, 255, 255), ventana)
     pygame.display.update()
     pygame.time.delay(2000)
 
@@ -435,8 +460,9 @@ def menu_principal():
         pygame.mixer.init()
         pygame.mixer.music.load('sonidos/CancionTetris.mp3')
         pygame.mixer.music.play(-1)
-        ventana.fill((0,0,0))
-        dibujar_texto_medio('Presiona cualquier tecla para jugar.', 42, (113, 125, 126), ventana)
+        ventana.fill((0, 0, 0))
+        dibujar_texto_medio(
+            'Presiona cualquier tecla para jugar.', 42, (113, 125, 126), ventana)
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -450,4 +476,4 @@ def menu_principal():
 ventana = pygame.display.set_mode((s_width, s_height))
 pygame.display.set_caption('Tetris')
 
-menu_principal()  # start game
+menu_principal()  # empezar juego
